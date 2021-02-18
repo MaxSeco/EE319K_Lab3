@@ -1,5 +1,5 @@
 ;****************** main.s ***************
-; Program written by: Valvano, solution
+; Program written by: Valvano, solution. ; initial commit
 ; Date Created: 2/4/2017
 ; Last Modified: 1/17/2021
 ; Brief description of the program
