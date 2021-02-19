@@ -177,11 +177,14 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 ; Phase'nB' checks PF4 for button release, executes appropriate DC ON duration
 ; For these reasons, only phase1 will be commented in detail
 BreathingLED	
+				PUSH {LR, R10}			;LR stack save for nested subroutine call
+				
 				MOV R6, #0				;clears RDC ON register
 				MOV R7, #100				;clears RDC OFF register
 				B phase1
 
-terminateBreath BX LR
+terminateBreath POP {LR, R10}
+				BX LR
 
 phase1			CMP R6, #90				;compares RDC ON to phase1 exit condition
 				BEQ phase2				;phase2 shift if exit condition is met
@@ -189,35 +192,22 @@ phase1			CMP R6, #90				;compares RDC ON to phase1 exit condition
 				SUBS R7, #10			;increments RDC OFF by -10
 				MOV R9, R6
 				MOV R8, R7
-				
-				PUSH {LR, R10}			;LR stack save for nested subroutine call
 				BL checkPF4Input		;calls for button status check 
-				POP {LR, R10}		
 				CMP R5, #1				;comparison of PF4 (negative logic), terminates breathing if button was released (R5=1)
 				BNE terminateBreath
-				PUSH {LR, R10}
+				
 phase1A			BL delay				;executes .5ms delay
 				SUBS R8, #1				
-				BHS phase1A
-				POP {LR, R10}
-				PUSH {LR, R10}
-				BL turnOnLED
-				POP {LR, R10}
-
-				PUSH {LR, R10}			
+				BHS phase1A						
+				BL turnOnLED	
 				BL checkPF4Input
-				POP{LR, R10}
 				CMP R5, #1				
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase1B			BL delay
 				SUBS R9, #1
 				BHS phase1B
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOffLED
-				POP {LR, R10}
-				
 				B phase1
 
 phase2			CMP R6, #30
@@ -225,36 +215,23 @@ phase2			CMP R6, #30
 				SUBS R6, #20
 				ADD R7, R7, #20
 				MOV R9, R6
-				MOV R8, R7
-				
-				PUSH {LR, R10}
+				MOV R8, R7		
 				BL checkPF4Input
-				POP {LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase2A			BL delay
 				SUBS R8, #1
 				BHS phase2A
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOnLED
-				POP {LR, R10}
-
-				PUSH {LR, R10}
 				BL checkPF4Input
-				POP {LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase2B			BL delay
 				SUBS R9, #1
 				BHS phase2B
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOffLED
-				POP {LR, R10}
-				
 				B phase2
 				
 phase3			CMP R6, #90
@@ -263,35 +240,22 @@ phase3			CMP R6, #90
 				SUBS R7, #20
 				MOV R9, R6
 				MOV R8, R7
-
-				PUSH {LR, R10}
 				BL checkPF4Input
-				POP {LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase3A			BL delay
 				SUBS R8, #1
 				BHS phase3A
-				POP {LR, R10}
-				PUSH{LR, R10}
 				BL turnOnLED
-				POP {LR, R10}
-				
-				PUSH{LR, R10}
 				BL checkPF4Input
-				POP{LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase3B			BL delay
 				SUBS R9, #1
 				BHS phase3B
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOffLED
-				POP {LR, R10}
-				
 				B phase3
 				
 phase4			CMP R6, #10
@@ -300,35 +264,22 @@ phase4			CMP R6, #10
 				ADD R7, R7, #10
 				MOV R9, R6
 				MOV R8, R7
-
-				PUSH{LR, R10}
 				BL checkPF4Input
-				POP {LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase4A			BL delay
 				SUBS R8, #1
 				BHS phase4A
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOnLED
-				POP {LR, R10}
-
-				PUSH{LR, R10}
 				BL checkPF4Input
-				POP {LR, R10}
 				CMP R5, #1
 				BNE terminateBreath
-				PUSH {LR, R10}
+
 phase4B			BL delay
 				SUBS R9, #1
 				BHS phase4B
-				POP {LR, R10}
-				PUSH {LR, R10}
 				BL turnOffLED
-				POP {LR, R10}
-				
 				B phase4
 				
 initBreathRestart 		MOV R6, #0
