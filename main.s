@@ -1,5 +1,5 @@
 ;****************** main.s ***************
-; Program written by: Valvano, solution. ; ......
+; Program written by: Valvano, solution
 ; Date Created: 2/4/2017
 ; Last Modified: 1/17/2021
 ; Brief description of the program
@@ -78,7 +78,7 @@ Start
 
 			LDR		R0, =GPIO_PORTF_DIR_R			
 			LDRB	R1, [R0]
-			BIC		R1, #0x10						; Make PE4 as input
+			AND		R1, #0x10		;PREV: BIC R1, #0x10				; Make PE4 as input
 			STRB	R1, [R0]
 		
 			; Digitally enable pins (DEN)
@@ -91,7 +91,13 @@ Start
 			LDRB	R1, [R0]
 			ORR		R1, #0x10
 			STRB	R1, [R0]
-
+			
+			; Pull Up Resistor (PUR)- Gives board switch inputs an internal pull-up resistor
+			LDR 	R0, =GPIO_PORTF_PUR_R
+			LDRB	R1, [R0]
+			ORR		R1, #0x10
+			STR 	R1, [R0]
+			
 			CPSIE  I    							; TExaS voltmeter, scope runs on interrupts
 			
 ;*************************************************************************************************************			
@@ -107,20 +113,20 @@ loop
 loop1  		BL		checkInput						; checks whether button is pressed
 			BL		delay							; delay 1 ms
 			SUBS	R2, #1							; R2 contains the time (ms) left in OFF duty 
-			BHS		loop1				;previously BNE
+			BNE		loop1
 			BL  	turnOnLED
 			
 			MOV		R2, R3							
 loop2		BL		checkInput
 			BL		delay							
 			SUBS	R2, #1							; R2 contains the time (ms) left in ON duty 
-			BHS		loop2				;previously BNE
+			BNE		loop2
 			BL		turnOffLED
 			
 			B 		loop	
 
 *****************************************************************************************************************
-; The program enters this phase if PE1 is pressed, and exits when it is released
+; The program enters this phase if PE2 is pressed, and exits when it is released
 Pressed		MOV		R5, #1							; R5 = 1 if pressed, 0 otherwise
 wait2		BL		checkInput						; check if button is released
 			SUBS	R5, #0
@@ -143,10 +149,10 @@ modDutyCycle
 checkInput	LDR		R0, =GPIO_PORTF_DATA_R			
 			LDR		R1, [R0]					
 			AND		R1, #0x10						; Isolate input PF4
-			SUBS	R1, #0							; If PF4 = 0 (negative logic), make LED breathe
-			PUSH    {LR, R7}
+			SUBS	R1, #0							; If PE4 = 0 (negative logic), make LED breathe
+			PUSH	{LR, R0}
 			BEQ		BreathingLED
-			POP     {LR, R7}
+			POP		{LR, R0}
 			
 			LDR		R0, =GPIO_PORTE_DATA_R
 			LDR		R1, [R0]
@@ -172,7 +178,8 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 ; For these reasons, only phase1 will be commented in detail
 BreathingLED	
 				MOV R6, #0				;clears RDC ON register
-				MOV R7, #0				;clears RDC OFF register
+				MOV R7, #100				;clears RDC OFF register
+				B phase1
 
 terminateBreath BX LR
 
@@ -183,25 +190,33 @@ phase1			CMP R6, #90				;compares RDC ON to phase1 exit condition
 				MOV R9, R6
 				MOV R8, R7
 				
-phase1A 		PUSH {LR, R10}			;LR stack save for nested subroutine call
+				PUSH {LR, R10}			;LR stack save for nested subroutine call
 				BL checkPF4Input		;calls for button status check 
 				POP {LR, R10}		
-				CMP R5, #0				;comparison of PF4 (negative logic), terminates breathing if button was released (R5=1)
+				CMP R5, #1				;comparison of PF4 (negative logic), terminates breathing if button was released (R5=1)
 				BNE terminateBreath
-				BL delay				;executes .5ms delay
+				PUSH {LR, R10}
+phase1A			BL delay				;executes .5ms delay
 				SUBS R8, #1				
 				BHS phase1A
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOnLED
-			
-phase1B			PUSH {LR, R10}			
+				POP {LR, R10}
+
+				PUSH {LR, R10}			
 				BL checkPF4Input
 				POP{LR, R10}
-				CMP R5, #0				
+				CMP R5, #1				
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase1B			BL delay
 				SUBS R9, #1
 				BHS phase1B
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOffLED
+				POP {LR, R10}
 				
 				B phase1
 
@@ -212,25 +227,33 @@ phase2			CMP R6, #30
 				MOV R9, R6
 				MOV R8, R7
 				
-phase2A			PUSH {LR, R10}
+				PUSH {LR, R10}
 				BL checkPF4Input
 				POP {LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase2A			BL delay
 				SUBS R8, #1
 				BHS phase2A
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOnLED
+				POP {LR, R10}
 
-phase2B		PUSH {LR, R10}
+				PUSH {LR, R10}
 				BL checkPF4Input
 				POP {LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase2B			BL delay
 				SUBS R9, #1
 				BHS phase2B
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOffLED
+				POP {LR, R10}
 				
 				B phase2
 				
@@ -241,25 +264,33 @@ phase3			CMP R6, #90
 				MOV R9, R6
 				MOV R8, R7
 
-phase3A			PUSH {LR, R10}
+				PUSH {LR, R10}
 				BL checkPF4Input
 				POP {LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase3A			BL delay
 				SUBS R8, #1
 				BHS phase3A
+				POP {LR, R10}
+				PUSH{LR, R10}
 				BL turnOnLED
+				POP {LR, R10}
 				
-phase3B			PUSH{LR, R10}
+				PUSH{LR, R10}
 				BL checkPF4Input
 				POP{LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase3B			BL delay
 				SUBS R9, #1
 				BHS phase3B
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOffLED
+				POP {LR, R10}
 				
 				B phase3
 				
@@ -270,30 +301,38 @@ phase4			CMP R6, #10
 				MOV R9, R6
 				MOV R8, R7
 
-phase4A			PUSH{LR, R10}
+				PUSH{LR, R10}
 				BL checkPF4Input
 				POP {LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase4A			BL delay
 				SUBS R8, #1
 				BHS phase4A
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOnLED
+				POP {LR, R10}
 
-phase4B			PUSH{LR, R10}
+				PUSH{LR, R10}
 				BL checkPF4Input
 				POP {LR, R10}
-				CMP R5, #0
+				CMP R5, #1
 				BNE terminateBreath
-				BL delay
+				PUSH {LR, R10}
+phase4B			BL delay
 				SUBS R9, #1
 				BHS phase4B
+				POP {LR, R10}
+				PUSH {LR, R10}
 				BL turnOffLED
+				POP {LR, R10}
 				
 				B phase4
 				
 initBreathRestart 		MOV R6, #0
-						MOV R7, #0
+						MOV R7, #100
 						B phase1				;restart location
 			
 			
@@ -302,15 +341,17 @@ initBreathRestart 		MOV R6, #0
 checkPF4Input	LDR		R0, =GPIO_PORTF_DATA_R			
 				LDR		R1, [R0]					
 				AND		R1, #0x10						; Isolate input PF4
-				SUBS	R1, #0							; If PF4 = 0 (negative logic), make LED breathe
+				CMP  	R1, #0							; If PF4 = 0 (negative logic), make LED breathe
 				BEQ     continue
-				BL      terminate
+				B       terminate
 
 continue        MOV R5, #1
 				BX LR
 				
 terminate       MOV R5, #0
 				BX LR
+			
+
 ********************************************************************************************************************
 ;This subroutine turns on the LED
 turnOnLED	LDR		R0, =GPIO_PORTE_DATA_R		
@@ -329,6 +370,6 @@ delay		LDR		R0, =10000
 wait		SUBS	R0, #1
 			BNE		wait
 			BX		LR
-********************************************************************************************************************
+********************************************************************************************************************			  
 		ALIGN      ; make sure the end of this section is aligned
 		END        ; end of file
