@@ -179,8 +179,8 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 BreathingLED	
 				PUSH {LR, R10}			;LR stack save for nested subroutine call
 				
-				MOV R6, #0				;clears RDC ON register
-				MOV R7, #100				;clears RDC OFF register
+RestartBreath 	MOV R6, #0				;clears RDC ON register
+				MOV R7, #100			;clears RDC OFF register
 				B phase1
 
 terminateBreath POP {LR, R10}
@@ -259,7 +259,7 @@ phase3B			BL delay
 				B phase3
 				
 phase4			CMP R6, #10
-				BEQ initBreathRestart			;branches to reinitialize RDC ON and RDC OFF for BreathingLED restart if exit condition is met
+				BEQ RestartBreath			;branches to reinitialize RDC ON and RDC OFF for BreathingLED restart if exit condition is met
 				SUBS R6, #10
 				ADD R7, R7, #10
 				MOV R9, R6
@@ -281,11 +281,6 @@ phase4B			BL delay
 				BHS phase4B
 				BL turnOffLED
 				B phase4
-				
-initBreathRestart 		MOV R6, #0
-						MOV R7, #100
-						B phase1				;restart location
-			
 			
 ********************************************************************************************************************
 ;This subroutine turns on the LED
