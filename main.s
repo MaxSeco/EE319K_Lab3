@@ -177,7 +177,7 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 ; Phase'nB' checks PF4 for button release, executes appropriate DC ON duration
 ; For these reasons, only phase1 will be commented in detail
 BreathingLED	
-				PUSH {LR, R10}			;LR stack save for nested subroutine call
+				PUSH {LR, R10}			; LR stack save for nested subroutine call
 				
 RestartBreath 	MOV R6, #0				;clears RDC ON register
 				MOV R7, #100			;clears RDC OFF register
