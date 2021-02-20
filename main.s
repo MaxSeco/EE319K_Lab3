@@ -179,8 +179,8 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 BreathingLED	
 				PUSH {LR, R10}			; LR stack save for nested subroutine call
 				
-RestartBreath 	MOV R6, #0				;clears RDC ON register
-				MOV R7, #100			;clears RDC OFF register
+RestartBreath 	MOV R6, #0				; clears RDC ON register
+				MOV R7, #100			; clears RDC OFF register
 				B phase1
 
 terminateBreath POP {LR, R10}
