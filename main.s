@@ -151,7 +151,7 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 			AND		R1, #0x10						; Isolate input PF4
 			SUBS	R1, #0							; If PE4 = 0 (negative logic), make LED breathe
 			PUSH	{LR, R0}
-			BEQ		breathing
+			BEQ		breathe
 			POP		{LR, R0}
 			
 			LDR		R0, =GPIO_PORTE_DATA_R
@@ -162,7 +162,7 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 			MOV		R5, #0	
 			BX		LR
 
-breathing	BL		BreathingLED2
+breathe		BL		BreathingLED2
 *******************************************************************************************************************
 ; This subroutine makes the LED breathe
 ; R6: Reserved Duty Cycle (RDC) ON
@@ -303,9 +303,9 @@ BreathingLED2
 				
 				MOV		R6, #2							; R6 contains time in 0.5ms in ON duty cycle, vice versa for R7
 				MOV		R7, #18							; initialized to 10% ON, 90% OFF. Frequency is 100Hz.
-				MOV		R8, #1							; if R8 = 0, LED is getting dimmer. R1 = 1 = getting brighter
-
-Start1			BL		turnOffLED
+				MOV		R8, #1							; if R8 = 0, LED is getting dimmer. R1 = 1 = getting brighter	
+Start1			MOV		R9, #3							; R9 = speed. How fast LED breathes. Lower # means slower. 2-6 is ideal.
+Start2			BL		turnOffLED
 				MOV		R2, R7
 loop4   		BL		checkPF4Input					; checks whether button is pressed
 				CMP		R5, #1
@@ -324,20 +324,23 @@ loop5    		BL		checkPF4Input
 				BHI		loop5
 				BL		turnOffLED
 				
-        		CMP		R8, #1
-				BEQ		brighter
-				B		dimmer
+				SUBS	R9, #1
+				BHI		Start2
+				
+        		CMP		R8, #1							; makes the LED brighter or dimmer. 
+				BEQ		brighter						; R8 = 1 = brighter
+				B		dimmer							; R8 = 0 = dimmer
 				
 brighter		ADD		R6, #1							; modifies the duty cycle, more time in ON
 				SUBS	R7, #1
-				BHI		Start1
-				MOV		R8, #0
+				BHI		Start1							; if OFF duty = 0, LED is at maximum brightness 							
+				MOV		R8, #0							; then R8 = 0 which will make LED dimmer
 				B		Start1
 				
-dimmer   		ADD		R7, #1
+dimmer   		ADD		R7, #1							; modifies the duty cycle, more time in OFF
 				SUBS	R6, #1
-				BHI		Start1
-				MOV		R8, #1
+				BHI		Start1							; if ON duty = 0, LED is at lowest brightness
+				MOV		R8, #1							; then R8 = 1 which will make LED brighter
 				B		Start1
 				
 endBreathe		MOV		R5, #0
