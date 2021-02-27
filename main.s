@@ -151,7 +151,7 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 			AND		R1, #0x10						; Isolate input PF4
 			SUBS	R1, #0							; If PE4 = 0 (negative logic), make LED breathe
 			PUSH	{LR, R0}
-			BEQ		BreathingLED
+			BEQ		breathing
 			POP		{LR, R0}
 			
 			LDR		R0, =GPIO_PORTE_DATA_R
@@ -162,6 +162,7 @@ checkInput	LDR		R0, =GPIO_PORTF_DATA_R
 			MOV		R5, #0	
 			BX		LR
 
+breathing	BL		BreathingLED2
 *******************************************************************************************************************
 ; This subroutine makes the LED breathe
 ; R6: Reserved Duty Cycle (RDC) ON
@@ -188,8 +189,8 @@ terminateBreath POP {LR, R10}
 
 phase1			CMP R6, #90				;compares RDC ON to phase1 exit condition
 				BEQ phase2				;phase2 shift if exit condition is met
-				ADD  R6, R6, #10		;increments RDC ON by 10
-				SUBS R7, #10			;increments RDC OFF by -10
+				ADD  R6, R6, #10 		;increments RDC ON by 10
+				SUBS R7, #10 			;increments RDC OFF by -10
 				MOV R9, R6
 				MOV R8, R7
 				BL checkPF4Input		;calls for button status check 
@@ -283,7 +284,7 @@ phase4B			BL delay
 				B phase4
 			
 ********************************************************************************************************************
-;This subroutine turns on the LED
+;This subroutine checks PF4 and either terminates BreathingLED or continues it
 checkPF4Input	LDR		R0, =GPIO_PORTF_DATA_R			
 				LDR		R1, [R0]					
 				AND		R1, #0x10						; Isolate input PF4
@@ -296,7 +297,55 @@ continue        MOV R5, #1
 				
 terminate       MOV R5, #0
 				BX LR
-			
+				
+********************************************************************************************************************
+BreathingLED2
+				
+				MOV		R6, #4							; R6 contains time in 0.5ms in ON duty cycle, vice versa for R7
+				MOV		R7, #36							; initialized to 10% ON, 90% OFF. Frequency is 50Hz.
+				MOV		R8, #1							; if R8 = 0, LED is getting dimmer. R1 = 1 = getting brighter
+
+Start1			BL		turnOffLED
+				MOV		R2, R7
+loop4   		BL		checkPF4Input					; checks whether button is pressed
+				CMP		R5, #1
+				BNE		endBreathe
+				BL		delay							; delay 1 ms
+				SUBS	R2, #1							; R2 contains the time (ms) left in OFF duty 
+				BHI		loop4
+				BL  	turnOnLED
+				
+				MOV		R2, R6							
+loop5    		BL		checkPF4Input
+				CMP		R5, #1
+				BNE		endBreathe
+				BL		delay							
+				SUBS	R2, #1							; R2 contains the time (ms) left in ON duty 
+				BHI		loop5
+				BL		turnOffLED
+				
+        		CMP		R8, #1
+				BEQ		brighter
+				B		dimmer
+				
+brighter		ADD		R6, #1							; modifies the duty cycle, more time in ON
+				SUBS	R7, #1
+				BHI		Start1
+				MOV		R8, #0
+				B		Start1
+				
+dimmer   		ADD		R7, #1
+				SUBS	R6, #1
+				BHI		Start1
+				MOV		R8, #1
+				B		Start1
+				
+endBreathe		MOV		R5, #0
+				B		loop
+
+
+
+
 
 ********************************************************************************************************************
 ;This subroutine turns on the LED
