@@ -301,8 +301,8 @@ terminate       MOV R5, #0
 ********************************************************************************************************************
 BreathingLED2
 				
-				MOV		R6, #4							; R6 contains time in 0.5ms in ON duty cycle, vice versa for R7
-				MOV		R7, #36							; initialized to 10% ON, 90% OFF. Frequency is 50Hz.
+				MOV		R6, #5							; R6 contains time in 0.5ms in ON duty cycle, vice versa for R7
+				MOV		R7, #45							; initialized to 10% ON, 90% OFF. Frequency is 40Hz.
 				MOV		R8, #1							; if R8 = 0, LED is getting dimmer. R1 = 1 = getting brighter
 
 Start1			BL		turnOffLED
