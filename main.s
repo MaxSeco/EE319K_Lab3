@@ -184,7 +184,7 @@ RestartBreath 	MOV R6, #0				; clears RDC ON register
 				MOV R7, #100			; clears RDC OFF register
 				B phase1
 
-terminateBreath POP {LR, R10}
+terminateBreath POP {PC, R10}
 				BX LR
 
 phase1			CMP R6, #90				;compares RDC ON to phase1 exit condition
@@ -307,7 +307,7 @@ BreathingLED2
 Start1			MOV		R9, #3							; R9 = speed. How fast LED breathes. Lower # means slower. 2-6 is ideal.
 Start2			BL		turnOffLED
 				MOV		R2, R7
-loop4   		BL		checkPF4Input					; checks whether button is pressed
+loop4   		BL		checkPF4Input					; checks whether button is pressed, R5 = 1 if pressed, 0 otherwise
 				CMP		R5, #1
 				BNE		endBreathe
 				BL		delay							; delay 1 ms
@@ -332,13 +332,13 @@ loop5    		BL		checkPF4Input
 				B		dimmer							; R8 = 0 = dimmer
 				
 brighter		ADD		R6, #1							; modifies the duty cycle, more time in ON
-				SUBS	R7, #1
+				SUBS	R7, #1							; less time in OFF
 				BHI		Start1							; if OFF duty = 0, LED is at maximum brightness 							
 				MOV		R8, #0							; then R8 = 0 which will make LED dimmer
 				B		Start1
 				
 dimmer   		ADD		R7, #1							; modifies the duty cycle, more time in OFF
-				SUBS	R6, #1
+				SUBS	R6, #1							; less time in ON
 				BHI		Start1							; if ON duty = 0, LED is at lowest brightness
 				MOV		R8, #1							; then R8 = 1 which will make LED brighter
 				B		Start1
