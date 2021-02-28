@@ -300,6 +300,7 @@ terminate       MOV R5, #0
 				
 ********************************************************************************************************************
 BreathingLED2
+				PUSH	{R4, R9}
 				
 				MOV		R6, #2							; R6 contains time in 0.5ms in ON duty cycle, vice versa for R7
 				MOV		R7, #18							; initialized to 10% ON, 90% OFF. Frequency is 100Hz.
@@ -343,7 +344,8 @@ dimmer   		ADD		R7, #1							; modifies the duty cycle, more time in OFF
 				MOV		R8, #1							; then R8 = 1 which will make LED brighter
 				B		Start1
 				
-endBreathe		MOV		R5, #0
+endBreathe		POP		{R4-R9}
+				MOV		R5, #0
 				B		loop
 
 
